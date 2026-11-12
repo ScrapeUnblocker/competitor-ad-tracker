@@ -1,0 +1,62 @@
+{
+  "name": "competitor-ad-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Competitor ad tracker: new Facebook, Instagram and Google ads from your competitors in a Notion database, with a daily Slack or Discord digest of new ads, long-running winners, stopped ads and new landing pages - on a GitHub Actions schedule via the ScrapeUnblocker Meta Ad Library and Google Ads Transparency APIs.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "bin": {
+    "competitor-ad-tracker": "bin/cli.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "config.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js run",
+    "dry-run": "node bin/cli.js run --dry-run",
+    "test": "node --test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "competitor-ads",
+    "ad-tracker",
+    "meta-ad-library",
+    "facebook-ad-library",
+    "google-ads-transparency",
+    "competitor-analysis",
+    "notion",
+    "slack",
+    "discord",
+    "github-actions",
+    "automation",
+    "scrapeunblocker"
+  ],
+  "author": "ScrapeUnblocker",
+  "license": "MIT",
+  "homepage": "https://scrapeunblocker.com/?utm_source=github&utm_medium=integration&utm_campaign=example-repos",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ScrapeUnblocker/competitor-ad-tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ScrapeUnblocker/competitor-ad-tracker/issues"
+  },
+  "dependencies": {
+    "scrapeunblocker": "^0.19.0",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0"
+  }
+}

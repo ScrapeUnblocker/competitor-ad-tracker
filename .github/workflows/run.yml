@@ -1,0 +1,78 @@
+name: Track competitor ads
+
+on:
+  schedule:
+    # Once a day at 07:17 UTC. GitHub can start scheduled runs a few minutes late.
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: print the digest, send nothing, save nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: competitor-ad-tracker
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write # commit state/ads.json, what was already delivered
+    steps:
+      - name: Check for the API key
+        id: gate
+        env:
+          SCRAPEUNBLOCKER_KEY: ${{ secrets.SCRAPEUNBLOCKER_KEY }}
+        run: |
+          if [ -z "$SCRAPEUNBLOCKER_KEY" ]; then
+            echo "::notice title=Not set up yet::Add the SCRAPEUNBLOCKER_KEY repository secret (Settings > Secrets and variables > Actions) to start tracking. Nothing was checked."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.gate.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v7
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        if: steps.gate.outputs.ready == 'true'
+        run: npm ci --omit=dev
+
+      - name: Track ads and deliver what is new
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          SCRAPEUNBLOCKER_KEY: ${{ secrets.SCRAPEUNBLOCKER_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          DRY_RUN_FLAG: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: node bin/cli.js run $DRY_RUN_FLAG
+
+      - name: Commit the state
+        # Also after a failed delivery: the state records what did go out, so nothing is sent twice.
+        if: ${{ !cancelled() && steps.gate.outputs.ready == 'true' && !inputs.dry_run }}
+        run: |
+          git add state/
+          if git diff --cached --quiet; then
+            echo "State unchanged; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update ad tracker state [skip ci]"
+          git pull --rebase
+          git push

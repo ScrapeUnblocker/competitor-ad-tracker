@@ -1,0 +1,69 @@
+# competitor-ad-tracker: the one file you edit.
+#
+# Secrets never go here. The API key, the Notion token and webhook URLs are
+# repository secrets (or environment variables when you run it yourself).
+
+# Where the ads run: the Meta Ad Library country and the Google Ads
+# Transparency region. Two letters: US, GB, DE, FR, AU ...
+country: US
+
+# The advertisers to watch. Each needs a Meta Page ID, a Google domain or
+# advertiser, or both.
+competitors:
+  - name: Notion
+    # Numeric Facebook Page ID. Search the advertiser at facebook.com/ads/library,
+    # pick their Page from the suggestions, and copy the number after
+    # view_all_page_id= in the address bar.
+    meta_page_id: "825120160874613"
+    # The website their Google ads point to. Or, instead, google_advertiser:
+    # an advertiser name or id (AR...) from adstransparency.google.com.
+    google_domain: notion.com
+  - name: Perplexity
+    meta_page_id: "109760398882363"
+    google_domain: perplexity.ai
+  - name: Wispr Flow
+    meta_page_id: "110864474787474"
+    google_domain: wisprflow.ai
+
+meta:
+  # Active ads read per advertiser, 1-500, in one API request. When an
+  # advertiser runs more ads than this, stopped ads are not reported for it: an
+  # ad is never called stopped just because it fell outside the cap.
+  max_ads: 200
+  # all, image, video or meme
+  media_type: all
+
+google:
+  # Ads read per advertiser, 1-1000. Every block of up to 100 is one API request.
+  max_results: 100
+  # Only ads shown in the last N days.
+  lookback_days: 30
+  # An ad not shown for this many days counts as stopped.
+  stopped_after_days: 3
+  # Optional, comma list: search, youtube, maps, play, shopping. Empty = all.
+  platform: ""
+
+signals:
+  # An ad that shows up after the first run counts as new when it started
+  # within this many days (older ones are archived in Notion without a ping).
+  new_within_days: 7
+  # Flag ads still running after this many days. Advertisers rarely keep paying
+  # for an ad that does not work, so these are the ones to study. 0 = off.
+  long_running_days: 30
+  # Report ads that stopped running.
+  stopped: true
+  # Report landing pages a competitor starts sending ad traffic to (Meta ads).
+  landing_pages: true
+  # When an advertiser has more ads than one answer holds, a missing ad is not
+  # proof it stopped. Such an ad is reported as "not seen" after this many days
+  # without being seen (and marked "Not seen" in Notion). 0 = off.
+  unseen_days: 14
+  # A failed delivery is retried on later runs for this many days.
+  retry_days: 3
+
+delivery:
+  # Ads listed per competitor in the chat digest; the rest are counted.
+  max_items_per_competitor: 6
+  # Notion page creates and updates per run. The first run of a big watchlist
+  # can have hundreds; the rest are written on the next runs.
+  notion_max_writes: 150
